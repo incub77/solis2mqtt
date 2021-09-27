@@ -77,7 +77,7 @@ def main():
             mqtt.publish('solis2mqtt/' + entry['name'], value, retain=True)
 
         # wait with next poll configured interval, or if inverter is not responding ten times the interval
-        sleep(cfg['poll_interval'] if not no_response else cfg['poll_interval'] * 10)
+        sleep(cfg['poll_interval'] if not no_response else cfg['poll_interval_if_off'])
 
 
 if __name__ == "__main__":
