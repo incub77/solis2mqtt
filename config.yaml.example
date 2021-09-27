@@ -1,0 +1,10 @@
+device: /dev/ttyUSB0
+slave_address: 1
+poll_interval: 60
+mqtt:
+    url: hassio.local
+    port: 1883
+    use_ssl: true
+    validate_cert: true
+    user: whoami
+    passwd: secret

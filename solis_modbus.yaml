@@ -1,0 +1,124 @@
+- name: active_power
+  description: Active Power
+  unit: W
+  active: true
+  modbus:
+    register: 3004
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: measurement
+    device_class: power
+- name: inverter_temp
+  description: Inverter temperature
+  unit: C
+  active: true
+  modbus:
+    register: 3041
+    read_type: register
+    function_code: 4
+    number_of_decimals: 1
+    signed: false
+  homeassistant:
+    state_class: measurement
+    device_class: temperature
+- name: total_power
+  description: Inverter total power generation
+  unit: kWh
+  active: true
+  modbus:
+    register: 3008
+    read_type: long
+    function_code: 4
+    signed: true
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: generation_today
+  description: Energy generated today
+  unit: kWh
+  active: true
+  modbus:
+    register: 3014
+    read_type: register
+    function_code: 4
+    number_of_decimals: 1
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: generation_yesterday
+  description: Energy generated yesterday
+  unit: kWh
+  active: true
+  modbus:
+    register: 3015
+    read_type: register
+    function_code: 4
+    number_of_decimals: 1
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: total_dc_output_power
+  description: Total DC output power
+  unit: W
+  active: true
+  modbus:
+    register: 3006
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: measurement
+    device_class: power
+- name: energy_this_month
+  description: Energy generated this month
+  unit: kWh
+  active: true
+  modbus:
+    register: 3010
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: generation_last_month
+  description: Energy generated last month
+  unit: kWh
+  active: true
+  modbus:
+    register: 3012
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: generation_this_year
+  description: Energy generated this year
+  unit: kWh
+  active: true
+  modbus:
+    register: 3016
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+- name: generation_last_year
+  description: Energy generated last year
+  unit: kWh
+  active: true
+  modbus:
+    register: 3018
+    read_type: long
+    function_code: 4
+    signed: false
+  homeassistant:
+    state_class: total_increasing
+    device_class: energy
+
