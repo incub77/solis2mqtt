@@ -61,7 +61,9 @@ def main():
                                                  functioncode=entry['modbus']['function_code'],
                                                  signed=entry['modbus']['signed'])
 
-            except minimalmodbus.NoResponseError:
+            # NoResponseError occurs if inverter is off,
+            # InvalidResponseError might happen when inverter is starting up or shutting down during a request
+            except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError) as e:
                 print("Inverter not reachable")
                 no_response = True
                 if 'homeassistant' in entry and entry['homeassistant']['state_class'] == "measurement":
