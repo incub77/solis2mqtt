@@ -12,7 +12,7 @@
     device_class: power
 - name: inverter_temp
   description: Inverter temperature
-  unit: C
+  unit: °C
   active: true
   modbus:
     register: 3041
@@ -121,4 +121,18 @@
   homeassistant:
     state_class: total_increasing
     device_class: energy
+- name: grid_frequency
+  description: Grid Frequency
+  unit: Hz
+  active: true
+  modbus:
+    register: 3042
+    read_type: register
+    function_code: 4
+    number_of_decimals: 2
+    signed: false
+  homeassistant:
+    state_class: measurement
+    device_class:
+
 
