@@ -28,6 +28,7 @@ if cfg['mqtt']['use_ssl']:
 if cfg['mqtt']['use_ssl'] and not cfg['mqtt']['validate_cert']:
     mqtt.tls_insecure_set(True)
 mqtt.connect(cfg['mqtt']['url'], cfg['mqtt']['port'])
+mqtt.loop_start()
 
 # Generate MQTT discovery topics for home-assistant
 for entry in solis_modbus:
@@ -43,9 +44,9 @@ for entry in solis_modbus:
 
 # Work loop
 def main():
-    no_response = False
     while True:
         print("--- " + datetime.now().isoformat() + " ---")
+        no_response = False
         for entry in solis_modbus:
             if not entry['active']:
                 continue
@@ -64,8 +65,11 @@ def main():
             # NoResponseError occurs if inverter is off,
             # InvalidResponseError might happen when inverter is starting up or shutting down during a request
             except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError) as e:
-                print("Inverter not reachable")
-                no_response = True
+                # in case we didn't have a exception before
+                if not no_response:
+                    print("Inverter not reachable")
+                    no_response = True
+
                 if 'homeassistant' in entry and entry['homeassistant']['state_class'] == "measurement":
                     value = 0
                 else:
