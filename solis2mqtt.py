@@ -38,7 +38,10 @@ for entry in solis_modbus:
                                      entry['name'],
                                      entry['unit'],
                                      entry['homeassistant']['device_class'],
-                                     entry['homeassistant']['state_class'])),
+                                     entry['homeassistant']['state_class'],
+                                     cfg['inverter']['name'] if cfg['inverter']['name'] else "solis2mqtt",
+                                     cfg['inverter']['model'] if cfg['inverter']['model'] else "solis2mqtt",
+                                     cfg['inverter']['manufacturer'] if cfg['inverter']['manufacturer'] else "incub")),
                      retain=True)
 
 
@@ -61,6 +64,20 @@ def main():
                     value = instrument.read_long(entry['modbus']['register'],
                                                  functioncode=entry['modbus']['function_code'],
                                                  signed=entry['modbus']['signed'])
+                elif entry['modbus']['read_type'] == "composed_datetime":
+                    year = instrument.read_register(entry['modbus']['register'][0],
+                                                    functioncode=entry['modbus']['function_code'])
+                    month = instrument.read_register(entry['modbus']['register'][1],
+                                                    functioncode=entry['modbus']['function_code'])
+                    day = instrument.read_register(entry['modbus']['register'][2],
+                                                    functioncode=entry['modbus']['function_code'])
+                    hour = instrument.read_register(entry['modbus']['register'][3],
+                                                    functioncode=entry['modbus']['function_code'])
+                    minute = instrument.read_register(entry['modbus']['register'][4],
+                                                    functioncode=entry['modbus']['function_code'])
+                    second = instrument.read_register(entry['modbus']['register'][5],
+                                                    functioncode=entry['modbus']['function_code'])
+                    value = f"20{year:02d}-{month:02d}-{day:02d}T{hour:02d}:{minute:02d}:{second:02d}"
 
             # NoResponseError occurs if inverter is off,
             # InvalidResponseError might happen when inverter is starting up or shutting down during a request
