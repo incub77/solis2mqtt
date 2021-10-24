@@ -1,12 +1,12 @@
 import minimalmodbus
 import yaml
+import daemon
 from time import sleep
 from datetime import datetime
 from mqtt_discovery import DiscoverMsg
 from inverter import Inverter
 from mqtt import Mqtt
 from config import Config
-import daemon
 
 
 class Solis2Mqtt:
