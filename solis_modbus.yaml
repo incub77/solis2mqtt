@@ -121,18 +121,44 @@
   homeassistant:
     state_class: total_increasing
     device_class: energy
-- name: grid_frequency
-  description: Grid Frequency
-  unit: Hz
+# frequency currently not supported by home-assistant, topic is in discussion
+#- name: grid_frequency
+#  description: Grid Frequency
+#  unit: Hz
+#  active: true
+#  modbus:
+#    register: 3042
+#    read_type: register
+#    function_code: 4
+#    number_of_decimals: 2
+#    signed: false
+#  homeassistant:
+#    state_class: measurement
+#    device_class: frequency
+- name: system_datetime
+  description: System DateTime
+  unit:
   active: true
   modbus:
-    register: 3042
-    read_type: register
+    register: [3072, 3073, 3074, 3075, 3076, 3077] # [year, month, day, hour, minute, seconds]
+    read_type: composed_datetime
     function_code: 4
-    number_of_decimals: 2
-    signed: false
   homeassistant:
     state_class: measurement
+    device_class: timestamp
+- name: serial_number
+  description: Serial Number
+  unit:
+  active: false
+  modbus:
+    register: 3229
+    read_type: register
+    function_code: 4
+    number_of_decimals: 0
+    signed: false
+  homeassistant:
+    state_class:
     device_class:
+
 
 
