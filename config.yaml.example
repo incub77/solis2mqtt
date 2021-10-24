@@ -2,6 +2,10 @@ device: /dev/ttyUSB0
 slave_address: 1
 poll_interval: 60
 poll_interval_if_off: 300
+inverter:
+    name: solis2mqtt
+    manufacturer: Ginlong Technologies
+    model:
 mqtt:
     url: hassio.local
     port: 1883
