@@ -1,0 +1,15 @@
+device:
+slave_address: 1
+poll_interval: 60
+poll_interval_if_off: 300
+inverter:
+    name: solis2mqtt
+    manufacturer: incub
+    model: solis2mqtt
+mqtt:
+    url:
+    port: 8883
+    use_ssl: true
+    validate_cert: true
+    user:
+    passwd:
