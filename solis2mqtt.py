@@ -1,20 +1,25 @@
 import minimalmodbus
 import yaml
 import daemon
+import logging
+import argparse
 from time import sleep
 from datetime import datetime
-from mqtt_discovery import DiscoverMsg
+from threading import Lock
+from mqtt_discovery import DiscoverMsgSensor, DiscoverMsgNumber
 from inverter import Inverter
 from mqtt import Mqtt
 from config import Config
 
+VERSION = "0.5"
 
 class Solis2Mqtt:
-    def __init__(self):
+    def __init__(self):    
         self.cfg = Config('config.yaml')
         self.register_cfg = ...
         self.load_register_cfg()
         self.inverter = Inverter(self.cfg['device'], self.cfg['slave_address'])
+        self.inverter_lock = Lock()
         self.mqtt = Mqtt(self.cfg['inverter']['name'], self.cfg['mqtt'])
 
     def load_register_cfg(self, register_data_file='solis_modbus.yaml'):
@@ -24,16 +29,42 @@ class Solis2Mqtt:
     def generate_HA_discovery_topics(self):
         for entry in self.register_cfg:
             if entry['active'] and 'homeassistant' in entry:
-                self.mqtt.publish(f"homeassistant/sensor/{self.cfg['inverter']['name']}/{entry['name']}/config",
-                             str(DiscoverMsg(entry['description'],
-                                             entry['name'],
-                                             entry['unit'],
-                                             entry['homeassistant']['device_class'],
-                                             entry['homeassistant']['state_class'],
-                                             self.cfg['inverter']['name'],
-                                             self.cfg['inverter']['model'],
-                                             self.cfg['inverter']['manufacturer'])),
-                             retain=True)
+                if entry['homeassistant']['device'] == 'sensor':
+                    logging.info("Generating discovery topic for sensor: "+entry['name'])
+                    self.mqtt.publish(f"homeassistant/sensor/{self.cfg['inverter']['name']}/{entry['name']}/config",
+                                      str(DiscoverMsgSensor(entry['description'],
+                                                            entry['name'],
+                                                            entry['unit'],
+                                                            entry['homeassistant']['device_class'],
+                                                            entry['homeassistant']['state_class'],
+                                                            self.cfg['inverter']['name'],
+                                                            self.cfg['inverter']['model'],
+                                                            self.cfg['inverter']['manufacturer'],
+                                                            VERSION)),
+                                      retain=True)
+                elif entry['homeassistant']['device'] == 'number':
+                    logging.info("Generating discovery topic for number: " + entry['name'])
+                    self.mqtt.publish(f"homeassistant/number/{self.cfg['inverter']['name']}/{entry['name']}/config",
+                                      str(DiscoverMsgNumber(entry['description'],
+                                                            entry['name'],
+                                                            0,
+                                                            110,
+                                                            0.01,
+                                                            self.cfg['inverter']['name'],
+                                                            self.cfg['inverter']['model'],
+                                                            self.cfg['inverter']['manufacturer'],
+                                                            VERSION)),
+                                      retain=True)
+                else:
+                    print("Unknown homeassistant device type: "+entry['homeassistant']['device'])
+
+    def subscribe(self):
+        for entry in self.register_cfg:
+            if 'write_function_code' in entry['modbus']:
+                if not self.mqtt.on_message:
+                    self.mqtt.on_message = self.on_mqtt_message
+                logging.info("Subscribing to: "+self.cfg['inverter']['name'] + "/" + entry['name'] + "/set")
+                self.mqtt.persistent_subscribe(self.cfg['inverter']['name'] + "/" + entry['name'] + "/set")
 
     def read_composed_date(self, register, functioncode):
         year = self.inverter.read_register(register[0], functioncode=functioncode)
@@ -44,10 +75,29 @@ class Solis2Mqtt:
         second = self.inverter.read_register(register[5], functioncode=functioncode)
         return f"20{year:02d}-{month:02d}-{day:02d}T{hour:02d}:{minute:02d}:{second:02d}"
 
+    def on_mqtt_message(self, client, userdata, msg):
+        for el in self.register_cfg:
+            if el['name'] == msg.topic.split('/')[-2]:
+                register_cfg = el['modbus']
+                break
+
+        str_value = msg.payload.decode('utf-8')
+        if 'number_of_decimals' in register_cfg and register_cfg['number_of_decimals'] > 0:
+            value = float(str_value)
+        else:
+            value = int(str_value)
+        with self.inverter_lock:
+            self.inverter.write_register(register_cfg['register'],
+                                         value,
+                                         register_cfg['number_of_decimals'],
+                                         register_cfg['write_function_code'],
+                                         register_cfg['signed'])
+
     def main(self):
         self.generate_HA_discovery_topics()
+        self.subscribe()
         while True:
-            print("--- " + datetime.now().isoformat() + " ---")
+            logging.debug("Inverter scan start at " + datetime.now().isoformat())
             no_response = False
             for entry in self.register_cfg:
                 if not entry['active']:
@@ -55,23 +105,28 @@ class Solis2Mqtt:
 
                 try:
                     if entry['modbus']['read_type'] == "register":
-                        value = self.inverter.read_register(entry['modbus']['register'],
-                                                         number_of_decimals=entry['modbus']['number_of_decimals'],
-                                                         functioncode=entry['modbus']['function_code'],
-                                                         signed=entry['modbus']['signed'])
+                        with self.inverter_lock:
+                            value = self.inverter.read_register(entry['modbus']['register'],
+                                                                number_of_decimals=entry['modbus'][
+                                                                    'number_of_decimals'],
+                                                                functioncode=entry['modbus']['function_code'],
+                                                                signed=entry['modbus']['signed'])
+
                     elif entry['modbus']['read_type'] == "long":
-                        value = self.inverter.read_long(entry['modbus']['register'],
-                                                     functioncode=entry['modbus']['function_code'],
-                                                     signed=entry['modbus']['signed'])
+                        with self.inverter_lock:
+                            value = self.inverter.read_long(entry['modbus']['register'],
+                                                            functioncode=entry['modbus']['function_code'],
+                                                            signed=entry['modbus']['signed'])
                     elif entry['modbus']['read_type'] == "composed_datetime":
-                        value = self.read_composed_date(entry['modbus']['register'],
-                                                        functioncode=entry['modbus']['function_code'])
+                        with self.inverter_lock:
+                            value = self.read_composed_date(entry['modbus']['register'],
+                                                            functioncode=entry['modbus']['function_code'])
                 # NoResponseError occurs if inverter is off,
                 # InvalidResponseError might happen when inverter is starting up or shutting down during a request
                 except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError) as e:
                     # in case we didn't have a exception before
                     if not no_response:
-                        print("Inverter not reachable")
+                        logging.info("Inverter not reachable")
                         no_response = True
 
                     if 'homeassistant' in entry and entry['homeassistant']['state_class'] == "measurement":
@@ -80,14 +135,31 @@ class Solis2Mqtt:
                         continue
                 else:
                     no_response = False
-                    print("%s: %s %s" % (entry['description'], value, entry['unit']))
+                    logging.info(f"Read {entry['description']} - {value}{entry['unit']}")
 
                 self.mqtt.publish(f"{self.cfg['inverter']['name']}/{entry['name']}", value, retain=True)
 
             # wait with next poll configured interval, or if inverter is not responding ten times the interval
-            sleep(self.cfg['poll_interval'] if not no_response else self.cfg['poll_interval_if_off'])
+            sleep_duration = self.cfg['poll_interval'] if not no_response else self.cfg['poll_interval_if_off']
+            logging.debug(f"Inverter scanning paused for {sleep_duration} seconds")
+            sleep(sleep_duration)
 
 
 if __name__ == '__main__':
-    with daemon.DaemonContext(stdout=open("out.log", "w+"), stderr=open("err.out", "w+"), working_directory='./'):
+    parser = argparse.ArgumentParser(description='Solis inverter to mqtt bridge.')
+    parser.add_argument('-d', '--daemon', action='store_true', help='Start as daemon.')
+    parser.add_argument('-v', '--verbose', action='store_true', help="Enable full logging")
+    args = parser.parse_args()
+
+    log_level = logging.DEBUG if args.verbose else logging.INFO
+
+    def start_up():
+        logging.basicConfig(filename="solis2mqtt.log", level=log_level)
+        logging.info("Starting up...")
         Solis2Mqtt().main()
+
+    if args.daemon:
+        with daemon.DaemonContext(stderr=open("err.out", "w+"), working_directory='./'):
+            start_up()
+    else:
+        start_up()
