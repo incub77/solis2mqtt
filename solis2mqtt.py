@@ -1,7 +1,10 @@
+#!/usr/bin/python3
+
 import minimalmodbus
 import yaml
 import daemon
 import logging
+from logging.handlers import RotatingFileHandler
 import argparse
 from time import sleep
 from datetime import datetime
@@ -26,7 +29,7 @@ class Solis2Mqtt:
         with open(register_data_file) as smfile:
             self.register_cfg = yaml.load(smfile, yaml.Loader)
 
-    def generate_HA_discovery_topics(self):
+    def generate_ha_discovery_topics(self):
         for entry in self.register_cfg:
             if entry['active'] and 'homeassistant' in entry:
                 if entry['homeassistant']['device'] == 'sensor':
@@ -106,7 +109,7 @@ class Solis2Mqtt:
                                          register_cfg['signed'])
 
     def main(self):
-        self.generate_HA_discovery_topics()
+        self.generate_ha_discovery_topics()
         self.subscribe()
         while True:
             logging.debug("Inverter scan start at " + datetime.now().isoformat())
@@ -135,7 +138,7 @@ class Solis2Mqtt:
                                                             functioncode=entry['modbus']['function_code'])
                 # NoResponseError occurs if inverter is off,
                 # InvalidResponseError might happen when inverter is starting up or shutting down during a request
-                except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError) as e:
+                except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError):
                     # in case we didn't have a exception before
                     if not no_response:
                         logging.info("Inverter not reachable")
@@ -159,19 +162,23 @@ class Solis2Mqtt:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Solis inverter to mqtt bridge.')
-    parser.add_argument('-d', '--daemon', action='store_true', help='Start as daemon.')
-    parser.add_argument('-v', '--verbose', action='store_true', help="Enable full logging")
+    parser.add_argument('-d', '--daemon', action='store_true', help='start as daemon')
+    parser.add_argument('-v', '--verbose', action='store_true', help="verbose logging")
     args = parser.parse_args()
 
-    log_level = logging.DEBUG if args.verbose else logging.INFO
-
-    def start_up():
-        logging.basicConfig(filename="solis2mqtt.log", level=log_level)
+    def start_up(is_daemon, verbose):
+        log_level = logging.DEBUG if verbose else logging.INFO
+        handler = RotatingFileHandler("solis2mqtt.log", maxBytes=1024 * 1024,
+                                      backupCount=1) if is_daemon else logging.StreamHandler()
+        logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(message)s", handlers=[handler])
         logging.info("Starting up...")
         Solis2Mqtt().main()
 
     if args.daemon:
-        with daemon.DaemonContext(stderr=open("err.out", "w+"), working_directory='./'):
-            start_up()
+        with daemon.DaemonContext(working_directory='./'):
+            try:
+                start_up(args.daemon, args.verbose)
+            except:
+                logging.exception("Unhandled exception:")
     else:
-        start_up()
+        start_up(args.daemon, args.verbose)
