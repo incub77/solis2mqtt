@@ -6,7 +6,7 @@ import argparse
 from time import sleep
 from datetime import datetime
 from threading import Lock
-from mqtt_discovery import DiscoverMsgSensor, DiscoverMsgNumber
+from mqtt_discovery import DiscoverMsgSensor, DiscoverMsgNumber, DiscoverMsgSwitch
 from inverter import Inverter
 from mqtt import Mqtt
 from config import Config
@@ -55,8 +55,20 @@ class Solis2Mqtt:
                                                             self.cfg['inverter']['manufacturer'],
                                                             VERSION)),
                                       retain=True)
+                elif entry['homeassistant']['device'] == "switch":
+                    logging.info("Generating discovery topic for switch: " + entry['name'])
+                    self.mqtt.publish(f"homeassistant/switch/{self.cfg['inverter']['name']}/{entry['name']}/config",
+                                      str(DiscoverMsgSwitch(entry['description'],
+                                                            entry['name'],
+                                                            entry['homeassistant']['payload_on'],
+                                                            entry['homeassistant']['payload_off'],
+                                                            self.cfg['inverter']['name'],
+                                                            self.cfg['inverter']['model'],
+                                                            self.cfg['inverter']['manufacturer'],
+                                                            VERSION)),
+                                      retain=True)
                 else:
-                    print("Unknown homeassistant device type: "+entry['homeassistant']['device'])
+                    logging.error("Unknown homeassistant device type: "+entry['homeassistant']['device'])
 
     def subscribe(self):
         for entry in self.register_cfg:
@@ -100,7 +112,7 @@ class Solis2Mqtt:
             logging.debug("Inverter scan start at " + datetime.now().isoformat())
             no_response = False
             for entry in self.register_cfg:
-                if not entry['active']:
+                if not entry['active'] or 'function_code' not in entry['modbus'] :
                     continue
 
                 try:
@@ -135,7 +147,7 @@ class Solis2Mqtt:
                         continue
                 else:
                     no_response = False
-                    logging.info(f"Read {entry['description']} - {value}{entry['unit']}")
+                    logging.info(f"Read {entry['description']} - {value}{entry['unit'] if entry['unit'] else ''}")
 
                 self.mqtt.publish(f"{self.cfg['inverter']['name']}/{entry['name']}", value, retain=True)
 

@@ -68,3 +68,35 @@ class DiscoverMsgNumber():
 
     def __str__(self):
         return json.dumps(self.discover_msg)
+
+class DiscoverMsgSwitch():
+    DISCOVERY_MSG = {"name": "",
+                     "state_topic": "",
+                     "command_topic": "",
+                     "unique_id": "",
+                     "payload_on": "",
+                     "payload_off": "",
+                     "device": {"name": "",
+                                "model": "",
+                                "manufacturer": "",
+                                "identifiers": "solis2mqtt",
+                                "sw_version": "solis2mqtt"
+                                }
+                     }
+
+    def __init__(self, name, id, payload_on, payload_off, device_name, device_model, device_manufacturer, version):
+        self.discover_msg = deepcopy(DiscoverMsgSwitch.DISCOVERY_MSG)
+        self.discover_msg["name"] = name
+        self.discover_msg["state_topic"] = device_name + "/" + id
+        self.discover_msg["command_topic"] = device_name + "/" + id + "/set"
+        self.discover_msg["unique_id"] =  device_name + "/" +id
+        self.discover_msg["payload_on"] = payload_on
+        self.discover_msg["payload_off"] = payload_off
+        self.discover_msg["device"]["name"] = device_name
+        self.discover_msg["device"]["model"] = device_model
+        self.discover_msg["device"]["manufacturer"] = device_manufacturer
+        self.discover_msg["device"]["sw_version"] += str(version)
+
+    def __str__(self):
+        return json.dumps(self.discover_msg)
+
