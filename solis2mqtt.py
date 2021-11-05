@@ -58,6 +58,7 @@ class Solis2Mqtt:
                                                             self.cfg['inverter']['manufacturer'],
                                                             VERSION)),
                                       retain=True)
+                    #TODO number steps...
                 elif entry['homeassistant']['device'] == "switch":
                     logging.info("Generating discovery topic for switch: " + entry['name'])
                     self.mqtt.publish(f"homeassistant/switch/{self.cfg['inverter']['name']}/{entry['name']}/config",
@@ -168,7 +169,7 @@ if __name__ == '__main__':
 
     def start_up(is_daemon, verbose):
         log_level = logging.DEBUG if verbose else logging.INFO
-        handler = RotatingFileHandler("solis2mqtt.log", maxBytes=1024 * 1024,
+        handler = RotatingFileHandler("solis2mqtt.log", maxBytes=1024 * 1024 * 100,
                                       backupCount=1) if is_daemon else logging.StreamHandler()
         logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(message)s", handlers=[handler])
         logging.info("Starting up...")
