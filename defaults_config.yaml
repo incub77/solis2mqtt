@@ -1,7 +1,7 @@
 device:
 slave_address: 1
 poll_interval: 60
-poll_interval_if_off: 300
+poll_interval_if_off: 600
 inverter:
     name: solis2mqtt
     manufacturer: incub
