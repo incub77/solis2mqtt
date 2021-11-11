@@ -8,7 +8,7 @@ inverter:
     model:
 mqtt:
     url: hassio.local
-    port: 1883
+    port: 8883
     use_ssl: true
     validate_cert: true
     user: whoami
