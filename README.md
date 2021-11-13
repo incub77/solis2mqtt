@@ -112,9 +112,9 @@ This is an example of an entry:
 
 The following options are available:
 
-* `name`: [Required] Has to be unique. Used in MQTT path and together inverter name (from config.yaml) as part of 
-Home Assistant unique_id
-* `description`: [Required] Used for generating log messages and as name in Home Assistant
+* `name`: [Required] Has to be unique. Used in MQTT path and together with the inverter name (from config.yaml) as part 
+of Home Assistant unique_id
+* `description`: [Required] Used for generating log messages and as display name in Home Assistant
 * `unit`: [Optional] Added to log messages and used for Home Assistant
 * `active` [Required] Set to `false` if the entry should be ignored
 * `modbus`: [Required]
