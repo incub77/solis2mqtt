@@ -92,7 +92,7 @@ The file `solis_modbus.yaml` contains a list of entries, that describe the value
 (and write to) the inverter.\
 You can add your own entries if you want to read other metrics from the inverter. 
 Especially if it comes to writing to the inverter - use at your own risk :-)\
-Each entry can be configured with the following options:
+This is an example of an entry:
 ```yaml
 - name: inverter_temp
   description: Inverter temperature
@@ -110,6 +110,8 @@ Each entry can be configured with the following options:
     device_class: temperature
 ```
 
+The following options are available:
+
 * `name`: [Required] Has to be unique. Used in MQTT path and together inverter name (from config.yaml) as part of 
 Home Assistant unique_id
 * `description`: [Required] Used for generating log messages and as name in Home Assistant
@@ -120,7 +122,9 @@ Home Assistant unique_id
   * `read_type`: [Required] The [modbus data type](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html). 
 Currently `register` and `long` are supported. Additionally `composed_datetime` can also be used here (see TODO)
   * `function_code`: [Required] The 
-[modbus function code](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html#implemented-functions) to use
+[modbus function code](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html#implemented-functions) to read
+the register
+  * `write_function_code`: [Optional] The function code to write to the register
   * `number_of_decimals`: [Optional] Can only be used in combination with `ready_type: register`. Used for automatic 
 content conversion, e.g. 101 with `number_of_decimals: 1` is read as 10.1
   * `signed`: [Required] Whether the data should be interpreted as signed or unsigned
@@ -132,6 +136,32 @@ Can either be `sensor`, `number` or `switch`
 sensors 
   * `device_class`: [Optional] [Device class](https://www.home-assistant.io/integrations/sensor/#device-class) for 
 Home Assistant sensors
+  * `payload_on`: [Optional] In combination with `device: switch` required. Specifies the payload that indicates the
+switch is in 'on' position
+  * `payload_off`: [Optional] In combination with `device: switch` required. Specifies the payload that indicates the
+'off' position
+
+Special case for datetime
+-------------------------
+
+As the datetime information is stored in several registers, there is a special `read_type` to read this as one ISO 
+datetime.
+
+```
+- name: system_datetime
+  description: System DateTime
+  unit:
+  active: true
+  modbus:
+    register: [3072, 3073, 3074, 3075, 3076, 3077] # [year, month, day, hour, minute, seconds]
+    read_type: composed_datetime
+    function_code: 4
+  homeassistant:
+    device: sensor
+    state_class:
+    device_class: timestamp
+```
+
 
 Screenshots
 ===========
