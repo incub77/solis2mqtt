@@ -75,7 +75,7 @@ mqtt:
 * `poll_interval_if_off`: [Optional] Poll interval during night in seconds, default is _600_
 * `interter`:
   * `name`: [Optional] Used as a base path in MQTT, default is _solis2mqtt_
-  * `manufaturer`: [Optional] Used for device info in Home Assistant, default is _incub_
+  * `manufacturer`: [Optional] Used for device info in Home Assistant, default is _incub_
   * `model`: [Optional] Used for device info in Home Assistant, default is _solis2mqtt_
 * `mqtt`:
   * `url`: [Required] URL to your MQTT broker
