@@ -1,0 +1,5 @@
+device: <path>
+mqtt:
+    url: <url>
+    user: <user>
+    passwd: <password>
