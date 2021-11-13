@@ -8,7 +8,6 @@ home automation system is only possible in a detoured manner.
 This software acts as a bridge between the RS485 interface and a MQTT broker to allow easy integration into a 
 home automation (with special support for Home Assistant), and furthermore without cloud constraints.
 
-
 Hardware
 ========
 
@@ -134,7 +133,12 @@ sensors
   * `device_class`: [Optional] [Device class](https://www.home-assistant.io/integrations/sensor/#device-class) for 
 Home Assistant sensors
 
+Screenshots
+===========
 
+![MQTT Explorer](img/MQTT%20Explorer.jpg)
+
+![Home Assistant](img/Home%20Assistant.jpg)
 
 
 
