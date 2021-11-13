@@ -14,18 +14,23 @@ Hardware
 
 * The inverter uses a proprietary(?) RS485 plug, with the following pin-out:
 ```
- 2 3
- 1 4
-  |
+  /-----\
+  | 2 3 |
+  | 1 4 |
+  \--^--/
 ```
   
-1 := +5V, 2 := GND, 3 := DATA, 4 := DATA
+1. +5V
+2. GND
+3. DATA+
+4. DATA-
+
 * Any RS485 adapter should do. I use one of [these](https://www.amazon.com/DSD-TECH-SH-U14-Built-Terminal/dp/B083169369)
-(with FTDI chip), but have also tested [these](https://www.amazon.com/-/en/dp/B07TB5WVF4) simple (and cheaper) ones.
-* I would highly recommend using a proper connector, which can be found on 
+(with FTDI chip), but have also tested [this](https://www.amazon.com/-/en/dp/B07TB5WVF4) simple (and cheaper) one.
+* I highly recommend using a proper connector, which can be found on 
 [ebay](https://www.ebay.com/itm/234026066127?hash=item367d0a60cf:g:6uYAAOSwFKVgrqlf) (search for "RS485 Solis" or 
 "Exceedconn EC04681-2014-BF") and solder the wires to it.
-* I tested the software on a RaspberryPi Zero W, but any Linux box should do.
+* I run the software on a RaspberryPi Zero W, but any Linux box should do.
 
 Installation
 ============
@@ -35,7 +40,7 @@ TODO
 Basic Configuration
 ===================
 
-For basic configuration is read from `config.yaml`, that has to contain at least these entries:
+Configuration is read from `config.yaml`, that has to contain at least these entries:
 
 ```yaml
 device: /dev/ttyUSB0
@@ -84,8 +89,10 @@ mqtt:
 Inverter configuration
 ======================
 
-The file `solis_modbus.yaml` contains a list of entries, that describe the which values to read from 
-(and write to) the inverter.
+The file `solis_modbus.yaml` contains a list of entries, that describe the values to read from 
+(and write to) the inverter.\
+You can add your own entries if you want to read other metrics from the inverter. 
+Especially if it comes to writing to the inverter - use at your own risk :-)\
 Each entry can be configured with the following options:
 ```yaml
 - name: inverter_temp
@@ -104,7 +111,28 @@ Each entry can be configured with the following options:
     device_class: temperature
 ```
 
-TODO
+* `name`: [Required] Has to be unique. Used in MQTT path and together inverter name (from config.yaml) as part of 
+Home Assistant unique_id
+* `description`: [Required] Used for generating log messages and as name in Home Assistant
+* `unit`: [Optional] Added to log messages and used for Home Assistant
+* `active` [Required] Set to `false` if the entry should be ignored
+* `modbus`: [Required]
+  * `register`: [Required] The modbus register address to read/write
+  * `read_type`: [Required] The [modbus data type](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html). 
+Currently `register` and `long` are supported. Additionally `composed_datetime` can also be used here (see TODO)
+  * `function_code`: [Required] The 
+[modbus function code](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html#implemented-functions) to use
+  * `number_of_decimals`: [Optional] Can only be used in combination with `ready_type: register`. Used for automatic 
+content conversion, e.g. 101 with `number_of_decimals: 1` is read as 10.1
+  * `signed`: [Required] Whether the data should be interpreted as signed or unsigned
+* `homeassistant`: [Optional]
+  * `device`: [Required] Used for [Home Assistant MQTT discovery](https://www.home-assistant.io/docs/mqtt/discovery/). 
+Can either be `sensor`, `number` or `switch`
+  * `state_class`: [Optional] 
+[State class](https://developers.home-assistant.io/docs/core/entity/sensor/#available-state-classes) for Home Assistant 
+sensors 
+  * `device_class`: [Optional] [Device class](https://www.home-assistant.io/integrations/sensor/#device-class) for 
+Home Assistant sensors
 
 
 
