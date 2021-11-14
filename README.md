@@ -1,3 +1,5 @@
+## A MQTT bridge for Solis solar inverters. ##
+
 Introduction
 ============
 
@@ -145,7 +147,7 @@ Special case for datetime
 -------------------------
 
 As the datetime information is stored in several registers, there is a special `read_type` to read this as one ISO 
-datetime.
+datetime string.
 
 ```
 - name: system_datetime
