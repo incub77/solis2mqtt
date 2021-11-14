@@ -78,7 +78,8 @@ cd /opt/solis2mqtt
 python3 ./solis2mqtt.py
 ```
 The following command line arguments are implemented:
-* `-d` Start as a daemon. Otherwise, Solis2MQTT will stay attached to your shell and output logs to stdout/stderr.
+* `-d` Start as a daemon. Otherwise, Solis2MQTT will stay attached to your shell and writes log messages to 
+stdout/stderr.
 * `-v` Verbose mode. Will output debug logging messages.
 * `--help` ...
 
