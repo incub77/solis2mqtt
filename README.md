@@ -36,7 +36,51 @@ Hardware
 Installation
 ============
 
-TODO
+* Download and install to /opt/solis2mqtt  
+
+`wget https://github.com/incub77/solis2mqtt/archive/main.tar.gz -O - | sudo tar -xvzf - --one-top-level=/opt/solis2mqtt --strip 1`
+
+* Execute setup.sh. This will basically install dependencies, add a system user for the daemon to run in and setup 
+systemd.  
+
+`sudo bash /opt/solis2mqtt/setup.sh`
+
+* Edit `config.yaml`. See section "Basic Configuration".  
+
+e.g. `sudo vi /opt/solis2mqtt/config.yaml`
+
+* A reboot is necessary for user rights (access to /dev/ttyUSB*) to become effective.  
+
+`sudo reboot`
+
+Usage
+=====
+
+Solis2MQTT is intended to run as a system service. A log file is written to `/opt/solis2mqtt/solis2mqtt.log`. To control
+the service, the usual systemd commands are used:
+* Start: `sudo systemctl start solis2mqtt`
+* Stop: `sudo systemctl stop solis2mqtt`
+* Restart: `sudo systemctl restart solis2mqtt`
+* Disable start on boot: `sudo systemctl disable solis2mqtt`
+* Enable start on boot: `sudo systemctl enable solis2mqtt`
+
+To check if the service is running you can do a `ps -efH | grep solis2mqtt`. The output should look something like this:
+```
+solis2m+   460     1  0 22:53 ?        00:00:08   /usr/bin/python3 solis2mqtt.py -d
+pi         559   501  0 23:13 pts/0    00:00:00           grep --color=auto solis2mqtt
+```
+
+If Solis2MQTT doesn't start up to a point where the log file is written you can check `/var/log/syslog` for clues.
+
+For development/debugging Solis2MQTT can also be started directly. Make sure to change to the working directory before doing so.
+```
+cd /opt/solis2mqtt
+python3 ./solis2mqtt.py
+```
+The following command line arguments are implemented:
+* `-d` Start as a daemon. Otherwise, Solis2MQTT will stay attached to your shell and output logs to stdout/stderr.
+* `-v` Verbose mode. Will output debug logging messages.
+* `--help` ...
 
 Basic Configuration
 ===================
