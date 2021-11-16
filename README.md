@@ -45,7 +45,7 @@ systemd.
 
 `sudo bash /opt/solis2mqtt/setup.sh`
 
-* Edit `config.yaml`. See section [Basic Configuration](#Basic Configuration).  
+* Edit `config.yaml`. See section [Basic Configuration](#basic-Configuration).  
 
 e.g. `sudo vi /opt/solis2mqtt/config.yaml`
 
@@ -168,7 +168,7 @@ of Home Assistant unique_id
   * `register`: [Required] The modbus register address to read/write
   * `read_type`: [Required] The [modbus data type](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html). 
 Currently `register` and `long` are supported. Additionally `composed_datetime` can also be used here (see 
-[below](#Special case for datetime))
+[below](#special-case-for-datetime))
   * `function_code`: [Required] The 
 [modbus function code](https://minimalmodbus.readthedocs.io/en/stable/modbusdetails.html#implemented-functions) to read
 the register
