@@ -173,7 +173,7 @@ if __name__ == '__main__':
 
     def start_up(is_daemon, verbose):
         log_level = logging.DEBUG if verbose else logging.INFO
-        handler = RotatingFileHandler("solis2mqtt.log", maxBytes=1024 * 1024 * 100,
+        handler = RotatingFileHandler("solis2mqtt.log", maxBytes=1024 * 1024 * 10,
                                       backupCount=1) if is_daemon else logging.StreamHandler()
         logging.basicConfig(level=log_level, format="%(asctime)s - %(name)s - %(message)s", handlers=[handler])
         logging.info("Starting up...")
