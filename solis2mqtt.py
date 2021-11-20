@@ -23,6 +23,7 @@ class Solis2Mqtt:
         self.load_register_cfg()
         self.inverter = Inverter(self.cfg['device'], self.cfg['slave_address'])
         self.inverter_lock = Lock()
+        self.inverter_offline = False
         self.mqtt = Mqtt(self.cfg['inverter']['name'], self.cfg['mqtt'])
 
     def load_register_cfg(self, register_data_file='solis_modbus.yaml'):
@@ -103,18 +104,22 @@ class Solis2Mqtt:
         else:
             value = int(str_value)
         with self.inverter_lock:
-            self.inverter.write_register(register_cfg['register'],
-                                         value,
-                                         register_cfg['number_of_decimals'],
-                                         register_cfg['write_function_code'],
-                                         register_cfg['signed'])
+            try:
+                self.inverter.write_register(register_cfg['register'],
+                                             value,
+                                             register_cfg['number_of_decimals'],
+                                             register_cfg['write_function_code'],
+                                             register_cfg['signed'])
+            except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError):
+                if not self.inverter_offline:
+                    logging.exception(f"Error while writing message to inverter. Topic: '{msg.topic}, "
+                                      f"Value: '{str_value}', Register: '{register_cfg['register']}'.")
 
     def main(self):
         self.generate_ha_discovery_topics()
         self.subscribe()
         while True:
             logging.debug("Inverter scan start at " + datetime.now().isoformat())
-            no_response = False
             for entry in self.register_cfg:
                 if not entry['active'] or 'function_code' not in entry['modbus'] :
                     continue
@@ -141,22 +146,22 @@ class Solis2Mqtt:
                 # InvalidResponseError might happen when inverter is starting up or shutting down during a request
                 except (minimalmodbus.NoResponseError, minimalmodbus.InvalidResponseError):
                     # in case we didn't have a exception before
-                    if not no_response:
+                    if not self.inverter_offline:
                         logging.info("Inverter not reachable")
-                        no_response = True
+                        self.inverter_offline = True
 
                     if 'homeassistant' in entry and entry['homeassistant']['state_class'] == "measurement":
                         value = 0
                     else:
                         continue
                 else:
-                    no_response = False
+                    self.inverter_offline = False
                     logging.info(f"Read {entry['description']} - {value}{entry['unit'] if entry['unit'] else ''}")
 
                 self.mqtt.publish(f"{self.cfg['inverter']['name']}/{entry['name']}", value, retain=True)
 
             # wait with next poll configured interval, or if inverter is not responding ten times the interval
-            sleep_duration = self.cfg['poll_interval'] if not no_response else self.cfg['poll_interval_if_off']
+            sleep_duration = self.cfg['poll_interval'] if not inverter_offline else self.cfg['poll_interval_if_off']
             logging.debug(f"Inverter scanning paused for {sleep_duration} seconds")
             sleep(sleep_duration)
 
