@@ -185,6 +185,9 @@
     signed: false
   homeassistant:
     device: number
+    min: 0
+    max: 100
+    step: 0.01
     state_class:
     device_class:
 - name: on_off

@@ -188,7 +188,10 @@ Home Assistant sensors
 switch is in 'on' position
   * `payload_off`: [Optional] In combination with `device: switch` required. Specifies the payload that indicates the
 'off' position
-
+  * `min`: [Optional] In combination with `device: number` required. Specifies minimum value.
+  * `max`: [Optional] In combination with `device: number` required. Specifies maximum value.
+  * `step`: [Optional] In combination with `device: number` required. Specifies step value. Smallest value _0.001_.
+  
 Special case for datetime
 -------------------------
 

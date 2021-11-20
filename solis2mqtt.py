@@ -51,15 +51,14 @@ class Solis2Mqtt:
                     self.mqtt.publish(f"homeassistant/number/{self.cfg['inverter']['name']}/{entry['name']}/config",
                                       str(DiscoverMsgNumber(entry['description'],
                                                             entry['name'],
-                                                            0,
-                                                            110,
-                                                            0.01,
+                                                            entry['homeassistant']['min'],
+                                                            entry['homeassistant']['max'],
+                                                            entry['homeassistant']['step'],
                                                             self.cfg['inverter']['name'],
                                                             self.cfg['inverter']['model'],
                                                             self.cfg['inverter']['manufacturer'],
                                                             VERSION)),
                                       retain=True)
-                    #TODO number steps...
                 elif entry['homeassistant']['device'] == "switch":
                     logging.info("Generating discovery topic for switch: " + entry['name'])
                     self.mqtt.publish(f"homeassistant/switch/{self.cfg['inverter']['name']}/{entry['name']}/config",
@@ -161,7 +160,7 @@ class Solis2Mqtt:
                 self.mqtt.publish(f"{self.cfg['inverter']['name']}/{entry['name']}", value, retain=True)
 
             # wait with next poll configured interval, or if inverter is not responding ten times the interval
-            sleep_duration = self.cfg['poll_interval'] if not inverter_offline else self.cfg['poll_interval_if_off']
+            sleep_duration = self.cfg['poll_interval'] if not self.inverter_offline else self.cfg['poll_interval_if_off']
             logging.debug(f"Inverter scanning paused for {sleep_duration} seconds")
             sleep(sleep_duration)
 
