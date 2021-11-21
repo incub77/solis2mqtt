@@ -14,7 +14,7 @@ from inverter import Inverter
 from mqtt import Mqtt
 from config import Config
 
-VERSION = "0.6"
+VERSION = "0.7"
 
 class Solis2Mqtt:
     def __init__(self):    
